@@ -43,7 +43,10 @@ def scene_reconstruction(dataset, opt, hyper, pipe, testing_iterations, saving_i
                          gaussians, scene, stage, tb_writer, train_iter,timer):
     first_iter = 0
 
+    # Initialize training parameters for the gaussian model
+    # ---including opacity, where is color?
     gaussians.training_setup(opt)
+
     if checkpoint:
         # breakpoint()
         if stage == "coarse" and stage not in checkpoint:
