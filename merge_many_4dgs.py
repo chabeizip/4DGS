@@ -213,6 +213,7 @@ render_images=[]
 if not os.path.exists(render_path):
     os.makedirs(render_path,exist_ok=True)
 for index, viewpoint in tqdm(enumerate(scene1.getVideoCameras())):
+    # pipe use default, don't override color
     result = render(viewpoint, gaussians, 
                     bg_color=background,
                     motion_bias=[

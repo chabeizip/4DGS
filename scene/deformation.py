@@ -210,6 +210,9 @@ class deform_network(nn.Module):
                                                 None,
                                                 times_sel)
         return means3D, scales, rotations, opacity, shs
+
+    # dynamic deformation, add timenet
+    # --- whether need to change timenet (C: 2)
     def get_mlp_parameters(self):
         return self.deformation_net.get_mlp_parameters() + list(self.timenet.parameters())
     def get_grid_parameters(self):

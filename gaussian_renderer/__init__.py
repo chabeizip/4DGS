@@ -101,6 +101,11 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     # If precomputed colors are provided, use them. Otherwise, if it is desired to precompute colors
     # from SHs in Python, do it. If not, then SH -> RGB conversion will be done by rasterizer.
     # shs = None
+    '''
+        Simulating viewpoint dependent color changes using Spherical Harmonics (SH).
+        --- check the independence of viewpoints between different theta.  
+        --- how to guarantee independencece
+    '''
     colors_precomp = None
     if override_color is None:
         if pipe.convert_SHs_python:
