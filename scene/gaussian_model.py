@@ -48,6 +48,8 @@ class GaussianModel:
         self.active_sh_degree = 0
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
+        #  GaussianModel(dataset.sh_degree, hyper)
+        # --- check hyper
         self._deformation = deform_network(args)
         self._features_dc = torch.empty(0)
         self._features_rest = torch.empty(0)
@@ -164,17 +166,24 @@ class GaussianModel:
         self._deformation_table = torch.gt(torch.ones((self.get_xyz.shape[0]),device="cuda"),0)
 
     def training_setup(self, training_args):
+        # perhaps control the density of point clouds
         self.percent_dense = training_args.percent_dense
+        # accumulate the gradient of each (x,y,z) during the optimization process
         self.xyz_gradient_accum = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
         self.denom = torch.zeros((self.get_xyz.shape[0], 1), device="cuda")
+        # accumulate the deformation value of each (x,y,z)
+        # --- check shape
         self._deformation_accum = torch.zeros((self.get_xyz.shape[0],3),device="cuda")
         
 
+        # different params groups have different lr, use Adam optimizer to optimize them
         l = [
             {'params': [self._xyz], 'lr': training_args.position_lr_init * self.spatial_lr_scale, "name": "xyz"},
-            # need to check for color, opacity and timenet
+            # --- check for color, opacity and timenet
+            # --- list params
             {'params': list(self._deformation.get_mlp_parameters()), 'lr': training_args.deformation_lr_init * self.spatial_lr_scale, "name": "deformation"},
             {'params': list(self._deformation.get_grid_parameters()), 'lr': training_args.grid_lr_init * self.spatial_lr_scale, "name": "grid"},
+            # --- whether for the color (dc and rest)
             {'params': [self._features_dc], 'lr': training_args.feature_lr, "name": "f_dc"},
             {'params': [self._features_rest], 'lr': training_args.feature_lr / 20.0, "name": "f_rest"},
             {'params': [self._opacity], 'lr': training_args.opacity_lr, "name": "opacity"},
@@ -184,6 +193,8 @@ class GaussianModel:
         ]
 
         self.optimizer = torch.optim.Adam(l, lr=0.0, eps=1e-15)
+
+        # dynamically adjust learning rate, take steps as input
         self.xyz_scheduler_args = get_expon_lr_func(lr_init=training_args.position_lr_init*self.spatial_lr_scale,
                                                     lr_final=training_args.position_lr_final*self.spatial_lr_scale,
                                                     lr_delay_mult=training_args.position_lr_delay_mult,
@@ -226,6 +237,8 @@ class GaussianModel:
         for i in range(self._rotation.shape[1]):
             l.append('rot_{}'.format(i))
         return l
+
+    # --- check time
     def compute_deformation(self,time):
         
         deform = self._deformation[:,:,:time].sum(dim=-1)
@@ -268,6 +281,7 @@ class GaussianModel:
         el = PlyElement.describe(elements, 'vertex')
         PlyData([el]).write(path)
         
+    # --- check whether need reset_color
     def reset_opacity(self):
         opacities_new = inverse_sigmoid(torch.min(self.get_opacity, torch.ones_like(self.get_opacity)*0.01))
         optimizable_tensors = self.replace_tensor_to_optimizer(opacities_new, "opacity")
