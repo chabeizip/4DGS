@@ -49,7 +49,7 @@ class GaussianModel:
         self.max_sh_degree = sh_degree  
         self._xyz = torch.empty(0)
         #  GaussianModel(dataset.sh_degree, hyper)
-        # --- check hyper
+        # --- check hyper (class ModelHiddenParams)
         self._deformation = deform_network(args)
         self._features_dc = torch.empty(0)
         self._features_rest = torch.empty(0)
